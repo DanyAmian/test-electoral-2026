@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Afinidad Política | Elecciones 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb; --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc; --card-bg: #ffffff;
+            --text-main: #0f172a; --text-muted: #64748b; --border-color: #e2e8f0;
+            --color-salf: #111111; --color-vox: #4ade80; --color-pp: #0158a8;
+            --color-cs: #fb923c; --color-psoe: #ef4444; --color-podemos: #6b21a8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .container { background: var(--card-bg); max-width: 850px; width: 100%; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); overflow: hidden; position: relative; min-height: 650px; display: flex; flex-direction: column; }
+        .hidden { display: none !important; }
+
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header { padding: 2rem 3rem 1rem; border-bottom: 1px solid var(--border-color); }
+        .progress-wrapper { width: 100%; height: 8px; background: var(--border-color); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #60a5fa); width: 0%; transition: width 0.4s ease; }
+        .screen { padding: 2rem 3rem; flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .title { font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.02em; }
+        .subtitle { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem; }
+        .question-meta { font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .question-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.3; }
+        .question-desc { color: var(--text-muted); font-weight: 600; margin-bottom: 1rem;}
+        
+        /* Caja de nota aclaratoria */
+        .question-note { background: #fffbeb; border-left: 4px solid #fbbf24; padding: 12px 16px; font-size: 0.95rem; color: #92400e; margin-bottom: 2rem; border-radius: 0 8px 8px 0; line-height: 1.5; }
+
+        .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; }
+        .option-btn { background: var(--card-bg); border: 2px solid var(--border-color); padding: 1.1rem 1.5rem; border-radius: 12px; font-size: 1rem; color: var(--text-main); text-align: left; cursor: pointer; transition: all 0.2s ease; line-height: 1.4;}
+        .option-btn:hover { border-color: var(--primary); background: #f0fdf4; transform: translateX(5px); }
+        .option-btn.selected { border-color: var(--primary); background: #eff6ff; font-weight: 600; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1); }
+
+        .nav-buttons { display: flex; justify-content: space-between; padding: 1.5rem 3rem; background: #f8fafc; border-top: 1px solid var(--border-color); }
+        .btn { padding: 0.8rem 1.8rem; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
+        .btn-outline:hover { color: var(--text-main); background: #e2e8f0; }
+
+        /* Pantalla de Resultados */
+        .match-card { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 20px; padding: 2.5rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .match-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at top right, rgba(255,255,255,0.1), transparent); }
+        .logo-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; font-weight: 900; margin: 0 auto 1.5rem; color: white; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 8px 16px rgba(0,0,0,0.2); position: relative; z-index: 2; }
+        .match-title { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-bottom: 0.5rem; position: relative; z-index: 2;}
+        .match-party { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; position: relative; z-index: 2;}
+        .match-percentage { font-size: 1.5rem; color: #4ade80; font-weight: 700; position: relative; z-index: 2;}
+
+        .chart-container { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 2rem; }
+        .actions { display: flex; gap: 15px; justify-content: center; }
+        .btn-share { background: #10b981; color: white; }
+        .btn-share:hover { background: #059669; }
+
+        @media (max-width: 600px) {
+            .screen, .header, .nav-buttons { padding: 1.5rem; }
+            .title { font-size: 1.8rem; }
+            .match-party { font-size: 2rem; }
+            .actions { flex-direction: column; }
+            .btn { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- PANTALLA INICIO -->
+        <div id="screen-start" class="screen fade-in text-center" style="align-items: center; justify-content: center;">
+            <div style="background: #eff6ff; color: #2563eb; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px;">Versión Completa Explicada</div>
+            <h1 class="title">Test Electoral 2026</h1>
+            <p class="subtitle" style="max-width: 600px;">Contesta a estas 53 preguntas para descubrir tu afinidad. Cada pregunta incluye una nota explicativa con ejemplos para que sepas exactamente qué implica cada decisión política.</p>
+            <button class="btn btn-primary" style="padding: 1.2rem 3rem; font-size: 1.1rem; margin-top: 1rem;" onclick="startTest()">Comenzar el Análisis</button>
+        </div>
+
+        <!-- PANTALLA TEST -->
+        <div id="screen-test" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="header">
+                <div class="question-meta" id="q-counter">Pregunta 1 de X</div>
+                <h2 class="question-title" id="q-title">Título</h2>
+                <div class="progress-wrapper"><div class="progress-bar" id="p-bar"></div></div>
+            </div>
+            
+            <div class="screen">
+                <p class="question-desc" id="q-desc">Descripción</p>
+                <div class="question-note" id="q-note">💡 Nota: ...</div>
+                <div class="options-grid" id="options-box"></div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-outline" id="btn-prev" onclick="prevQ()">Volver</button>
+                <button class="btn btn-primary" id="btn-next" onclick="nextQ()" disabled>Siguiente</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA RESULTADOS -->
+        <div id="screen-result" class="screen hidden fade-in">
+            <div class="match-card">
+                <div class="match-title">Tu Mejor Opción Electoral</div>
+                <div class="logo-circle" id="winner-logo">?</div>
+                <div class="match-party" id="winner-name">Analizando...</div>
+                <div class="match-percentage" id="winner-match">0% de Afinidad</div>
+            </div>
+            <div class="chart-container">
+                <h3 style="margin-bottom: 1rem; text-align: center; color: var(--text-muted);">Espectro de Afinidad Global</h3>
+                <canvas id="affinityChart" height="180"></canvas>
+            </div>
+            <div class="actions">
+                <button class="btn btn-share" onclick="shareResults()">Compartir con amigos 📲</button>
+                <button class="btn btn-outline" onclick="location.reload()">Repetir Test 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const N = [2, 1, -1, -2, 0]; // A(Derecha), B(C-Derecha), C(C-Izquierda), D(Izquierda), E(Neutral)
+        const I = [-2, -1, 1, 2, 0]; // Inverso: A(Izquierda), D(Derecha)
+        const EX = [3, 1, -1, -2, 0]; // Peso extra a la opción A para radicalismos de derecha
+
+        const questions = [
+            // BLOQUE 1
+            { t: "1. Impuestos Generales", d: "¿Qué enfoque prefieres?", n: "💡 Aclaración: Trata sobre si prefieres pagar menos impuestos aunque eso implique recortar servicios (como hacer carreteras o contratar médicos), o si prefieres pagar más para mejorar los servicios públicos.", o: ["A. Reducir general, contener gasto.", "B. Reducir a clases medias, mantener altas.", "C. Mantener presión, priorizar servicios.", "D. Aumentar a rentas altas y empresas.", "E. Sin opinión."], w: N },
+            { t: "2. IRPF", d: "¿Qué harías con el Impuesto sobre la Renta?", n: "💡 Aclaración: El IRPF es lo que te descuentan de tu nómina. Bajarlo significa que cobras más dinero a final de mes, pero el Estado recauda menos para pensiones o sanidad.", o: ["A. Reducir para todos.", "B. Reducir a rentas medias/bajas.", "C. Mantener como está.", "D. Aumentar a rentas altas y reducir bajas.", "E. Sin opinión."], w: N },
+            { t: "3. Grandes patrimonios", d: "¿Qué harías con los impuestos a los muy ricos?", n: "💡 Aclaración: Se refiere a impuestos como el de Patrimonio o Sucesiones (herencias grandes). Algunos creen que asustan a los inversores (y piden quitarlos) y otros creen que sirven para repartir la riqueza.", o: ["A. Eliminarlos o reducirlos.", "B. Mantenerlos moderados.", "C. Mantener el sistema actual.", "D. Incrementarlos fuerte.", "E. Sin opinión."], w: EX },
+            { t: "4. Autónomos", d: "¿Cuál debería ser el enfoque principal?", n: "💡 Aclaración: Los autónomos pagan una 'cuota' mensual. La duda es si cobrarles muy poco para que tengan más dinero limpio, o cobrarles más para que tengan derecho a mejor pensión y paro cuando lo necesiten.", o: ["A. Reducir impuestos y cuotas significativamente.", "B. Simplificar burocracia.", "C. Mantener actual.", "D. Aumentar protección social (pagando más cuota).", "E. Sin opinión."], w: N },
+            { t: "5. Salario Mínimo (SMI)", d: "¿Qué posición se acerca a la tuya?", n: "💡 Aclaración: El sueldo mínimo por ley. Si sube mucho, los trabajadores ganan más, pero algunas empresas (sobre todo pequeñas) pueden quejarse de que no pueden pagarlo y despidan o contraten menos.", o: ["A. Subir poco o mantener estable.", "B. Subir según la situación de las empresas.", "C. Subir de forma significativa.", "D. Aumentar considerablemente sin importar el coste empresarial.", "E. Sin opinión."], w: N },
+            { t: "6. Mercado laboral", d: "¿Qué modelo prefieres para las empresas?", n: "💡 Aclaración: Flexibilidad (contratar y despedir barato y rápido) ayuda a las empresas a adaptarse, pero da menos seguridad y estabilidad al trabajador. Limitar los despidos protege al empleado pero encarece los costes de la empresa.", o: ["A. Facilidad para contratar y despedir.", "B. Flexibilidad pero con protección laboral.", "C. Mantener equilibrio actual.", "D. Reforzar protección y limitar o encarecer despidos.", "E. Sin opinión."], w: N },
+            { t: "7. Ayudas sociales", d: "Ante personas sin ingresos suficientes:", n: "💡 Aclaración: Trata sobre dar 'paguitas' o rentas mínimas. Unos dicen que desincentiva el buscar trabajo (se acomodan) y otros dicen que es un derecho humano básico para no caer en la pobreza extrema.", o: ["A. Priorizar que encuentren empleo (limitar ayudas).", "B. Combinar ayudas económicas con formación obligatoria.", "C. Mantener red amplia de ayudas independiente de la situación.", "D. Garantizar una renta mínima universal para todos.", "E. Depende de la situación."], w: EX },
+            { t: "8. Gasto público", d: "Si hubiera que elegir una prioridad:", n: "💡 Aclaración: El Estado funciona como una familia. ¿Prefieres que no se endeude y ahorre (recortando gastos de ministerios) o prefieres que gaste más dinero en ayudas y obras públicas aunque tenga que pedir préstamos (deuda)?", o: ["A. Reducir el déficit y el gasto, recortando si hace falta.", "B. Mantener gasto actual buscando eficiencia.", "C. Aumentar el gasto en servicios públicos (más impuestos).", "D. Aumentar considerablemente para ampliar el Estado del bienestar.", "E. Depende."], w: N },
+            { t: "9. Empresas y Estado", d: "¿Qué relación debe haber?", n: "💡 Aclaración: ¿El gobierno debe meterse en cómo funcionan las empresas (ej. decirles a qué precio vender la luz o la comida) o debe dejar que las empresas y clientes fijen los precios libremente por la ley de oferta y demanda?", o: ["A. Intervenir lo mínimo posible (mercado libre).", "B. Regular solo lo necesario para favorecer la competencia.", "C. Regular activamente sectores estratégicos (luz, banca).", "D. Aumentar considerablemente la intervención pública.", "E. Depende del sector."], w: N },
+            { t: "10. Desigualdad económica", d: "¿Qué afirmación se acerca a tu postura?", n: "💡 Aclaración: Unos creen que lo justo es que todos salgamos de la misma línea de salida (buena educación pública) y luego gane el que más se esfuerce. Otros creen que el Estado debe igualar también la línea de meta (repartiendo el dinero de los ricos).", o: ["A. Priorizar igualdad de oportunidades; las diferencias de riqueza dan igual.", "B. Reducir desigualdades sin penalizar a quien se esfuerza.", "C. Reducir la desigualdad económica debe ser el gran objetivo.", "D. El Estado debe intervenir mucho más para repartir la riqueza.", "E. Sin opinión."], w: N },
+            
+            // BLOQUE 2
+            { t: "11. Vivienda", d: "¿Qué debería hacer el Estado?", n: "💡 Aclaración: Ante la falta de pisos. ¿Se deben quitar permisos, burocracia y ecologismo para que los constructores hagan más pisos rápido (Derecha)? ¿O el Estado debe construir pisos públicos y ser el casero (Izquierda)?", o: ["A. Intervenir lo mínimo y facilitar la construcción privada.", "B. Aumentar oferta con ayudas puntuales a vulnerables.", "C. Construir mucha más vivienda pública y regular mercado.", "D. Intervenir fuertemente y expropiar o usar masivamente suelo público.", "E. Sin opinión."], w: N },
+            { t: "12. Alquileres", d: "En zonas donde han subido mucho los precios:", n: "💡 Aclaración: Poner un límite o tope al alquiler. Izquierda: 'Así nadie pagará barbaridades y podrán vivir'. Derecha: 'Si pones un tope, los dueños tendrán miedo, no alquilarán sus pisos, habrá menos pisos y será peor'.", o: ["A. No limitar precios; aumentar oferta construyendo más.", "B. Límites únicamente en zonas muy concretas y temporalmente.", "C. Controles amplios para proteger siempre al inquilino.", "D. Regular fuertemente y establecer precios máximos dictados por el Estado.", "E. Depende de la zona."], w: N },
+            { t: "13. Vivienda pública", d: "¿Qué porcentaje debería ser público?", n: "💡 Aclaración: Pisos propiedad del ayuntamiento/estado que se alquilan muy baratos. Cuestan muchos impuestos construirlos.", o: ["A. No es necesario aumentar significativamente el parque público.", "B. Aumentarlo de forma moderada para jóvenes vulnerables.", "C. Aumentarlo considerablemente.", "D. Convertir la vivienda pública en la principal forma de vivir en España.", "E. Sin opinión."], w: N },
+            { t: "14. Propietarios", d: "Política hacia propietarios que alquilan:", n: "💡 Aclaración: ¿Se debe dar premios (rebajas en impuestos) a los propietarios que pongan el piso barato, o se les debe obligar por ley y castigar con multas/impuestos a los que tienen pisos vacíos o piden mucho dinero?", o: ["A. Reducir su carga fiscal (impuestos) para animarles a alquilar.", "B. Ofrecer incentivos si alquilan a precios razonables.", "C. Mantener fuerte regulación para proteger al inquilino.", "D. Aumentar obligaciones y limitaciones a propietarios.", "E. Depende."], w: N },
+            { t: "15. Sanidad", d: "¿Qué modelo prefieres?", n: "💡 Aclaración: La sanidad pública la pagamos todos. La privada la paga quien quiere un seguro. La duda es si el Estado debe apoyarse en la sanidad privada pagándole (conciertos) para aligerar colas, o si debe prohibir eso e invertir solo en la 100% pública.", o: ["A. Sanidad pública básica + sector privado amplio.", "B. Pública fuerte permitiendo colaboración con clínicas privadas.", "C. Priorizar la pública y limitar contratos con privadas.", "D. Sanidad esencialmente pública, anulando lo privado.", "E. Sin opinión."], w: N },
+            { t: "16. Listas de espera", d: "Ante las listas de espera sanitarias:", n: "💡 Aclaración: Si hay cola de 6 meses para operarse, ¿ves bien que el Estado te envíe y pague tu operación en un hospital privado (concierto), o prefieres esperar pero que ese dinero se use para contratar más médicos públicos?", o: ["A. Utilizar libremente hospitales privados concertados para reducirlas.", "B. Utilizar la privada como apoyo solo si no hay más remedio.", "C. Aumentar exclusivamente recursos de la pública.", "D. Reducir a cero los conciertos e invertir todo el dinero en la pública.", "E. Depende."], w: N },
+            { t: "17. Educación", d: "¿Qué modelo educativo prefieres?", n: "💡 Aclaración: Pública (del Estado), Privada (pago 100%), Concertada (gestión privada, como un colegio de curas, pero pagado por el Estado). ¿Crees que los padres deben tener total libertad para elegir y que el Estado se lo pague (cheque escolar), o el Estado solo debe fomentar la escuela pública laica?", o: ["A. Libertad absoluta para padres (pin parental, cheque escolar).", "B. Mantener escuelas públicas y concertadas en equilibrio.", "C. Reforzar principalmente la escuela pública.", "D. Priorizar claramente la pública y asfixiar económicamente a la concertada.", "E. Sin opinión."], w: EX },
+            { t: "18. Educación concertada", d: "Sobre su financiación:", n: "💡 Aclaración: Si a un colegio concertado se le debe dar dinero de los impuestos aunque separen por sexos o den religión, o si ese dinero debe ir únicamente a la escuela pública.", o: ["A. Debe recibir dinero siempre que cumpla unos requisitos básicos.", "B. Mantenerse como alternativa con financiación controlada.", "C. Reducirse progresivamente el dinero público que reciben.", "D. El dinero público debe ser exclusivamente para colegios públicos.", "E. Sin opinión."], w: N },
+            { t: "19. Contenidos educativos", d: "¿Qué debe tener más peso en clase?", n: "💡 Aclaración: ¿El colegio está para enseñar Matemáticas, Lengua y exigir disciplina y esfuerzo (Derecha)? ¿O está también para educar en feminismo, ecologismo, diversidad sexual y gestión emocional (Izquierda)?", o: ["A. Matemáticas, ciencias, historia, esfuerzo y disciplina académica.", "B. Equilibrio entre académico, práctico y valores.", "C. Pensamiento crítico, educación emocional y materias clásicas.", "D. Mayor peso a la educación social, feminismo, diversidad y clima.", "E. Sin opinión."], w: N },
+            { t: "20. Universidad", d: "¿Cómo debería financiarse?", n: "💡 Aclaración: ¿La carrera universitaria te la debes pagar tú mayoritariamente con las tasas porque es tu futuro privado (Derecha)? ¿O debe ser gratis para el alumno y pagarse íntegramente con los impuestos de todos (Izquierda)?", o: ["A. El estudiante asume mayor coste, con becas para pobres.", "B. Tasas moderadas y un sistema amplio de becas.", "C. Reducir drásticamente lo que paga el alumno.", "D. Universidad prácticamente gratuita financiada con impuestos.", "E. Sin opinión."], w: N },
+            
+            // BLOQUE 3 (Inmigración y Seguridad - I y EX para captar SALF)
+            { t: "21. Inmigración general", d: "¿Cuál debe ser la política fronteriza?", n: "💡 Aclaración: Desde facilitar la entrada de trabajadores porque hacen falta para pagar pensiones y abrir las puertas por derechos humanos (Izquierda), hasta cerrar fronteras, devolver pateras y hacer deportaciones masivas (Derecha radical).", o: ["A. Facilitar inmigración legal y regularizar según demanda de trabajo.", "B. Mantener inmigración legal amplia pero con controles.", "C. Reducir significativamente la inmigración y endurecer entrada.", "D. Deportaciones masivas y bloqueos fronterizos muy estrictos.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "22. Inmigración irregular", d: "Si alguien entra sin papeles:", n: "💡 Aclaración: ¿Qué hacemos con quien ya está aquí en negro? ¿Le damos papeles para que trabaje legal (Izquierda) o lo expulsamos a su país sin excepciones (Derecha)?", o: ["A. Priorizar darle papeles si se integra o trabaja.", "B. Evaluar cada caso y expulsar si no es refugiado político.", "C. Aumentar expulsiones y no dar papeles.", "D. Expulsión sistemática y prioritaria de todos los irregulares.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "23. MENAs", d: "Menores Extranjeros No Acompañados:", n: "💡 Aclaración: Jóvenes menores que llegan solos. Según la ley internacional son niños que hay que proteger e integrar (Izquierda). Otros partidos dicen que generan inseguridad y hay que devolverlos a sus países inmediatamente (Derecha radical).", o: ["A. Repatriación y expulsión inmediata siempre.", "B. Reparto entre comunidades combinado con retornos cuando se pueda.", "C. Priorizar protegerles, acogerles y darles recursos en España.", "D. Asumir una responsabilidad incondicional y acoger a todos.", "E. Depende."], w: [3,1,-1,-2,0] },
+            { t: "24. Fronteras", d: "¿Cómo vigilar las fronteras?", n: "💡 Aclaración: Entre garantizar derechos humanos para que nadie muera en el mar y facilitar asilo, o poner concertinas, usar al ejército y usar fuerza militar para impedir la entrada física.", o: ["A. Control garantista respetando derechos humanos (sin violencia).", "B. Aumentar medios de la policía para el control.", "C. Reforzar fronteras fuertemente.", "D. Priorizar el control fronterizo al máximo (incluso militarización/muros).", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "25. Seguridad ciudadana", d: "Ante el crimen:", n: "💡 Aclaración: ¿El crimen se soluciona dando ayudas sociales y educación en barrios pobres para que no roben (Izquierda)? ¿O se soluciona poniendo más policías y castigos penales mucho más duros (Derecha)?", o: ["A. Priorizar prevención y ayudas sociales (no endurecer penas).", "B. Combinar prevención con policía eficaz.", "C. Incrementar medios policiales y penas de cárcel.", "D. Construir macrocárceles y endurecer significativamente los castigos.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "26. Delincuencia reincidente", d: "¿Qué hacer con el que roba 20 veces?", n: "💡 Aclaración: ¿El objetivo de la cárcel es reeducar al ladrón para que vuelva a la sociedad reformado (Izquierda)? ¿O el objetivo es castigarle y encerrarle para que no moleste a los ciudadanos honrados (Derecha)?", o: ["A. Priorizar programas de reinserción en la sociedad.", "B. Combinar reinserción con penas más severas.", "C. Endurecer considerablemente las penas de cárcel.", "D. Cadena perpetua o penas muy largas para reincidentes (trabajos forzados).", "E. Depende."], w: [-2,-1,1,3,0] },
+            { t: "27. Ocupación ilegal", d: "¿Qué hacer con los okupas?", n: "💡 Aclaración: Derecha: 'Si entran en tu casa, la policía los echa a patadas en 24h y van a prisión'. Izquierda: 'A veces son familias pobres, el juez debe revisar si es un piso de un banco (fondo buitre) antes de dejarlos en la calle'.", o: ["A. Desalojos de la policía en 24/48h sin juez de por medio y a prisión.", "B. Agilizar leyes para desalojos rápidos protegiendo al dueño.", "C. Proteger al propietario pero con alternativas de servicios sociales para los okupas.", "D. Impedir los desalojos de familias vulnerables sin alternativa habitacional.", "E. Depende."], w: [3,1,-1,-2,0] },
+            { t: "28. Justicia", d: "¿Cuál debe ser la prioridad?", n: "💡 Aclaración: Sobre cómo funciona el sistema de juzgados. Unos quieren más eficiencia digital (Derecha/Centro) y otros que la justicia gratis sea mucho más accesible para los pobres (Izquierda).", o: ["A. Reducir burocracia, acelerar procesos mediante digitalización.", "B. Aumentar número de jueces.", "C. Aumentar recursos públicos en general.", "D. Reforma profunda para que sea totalmente gratuita y accesible a clases bajas.", "E. Sin opinión."], w: N },
+            { t: "29. Independencia judicial", d: "¿Quién debe elegir a los jueces del Supremo/CGPJ?", n: "💡 Aclaración: ¿Los propios jueces eligen a sus jefes (así los políticos no mandan sobre ellos, aunque dicen que se vuelve un club conservador cerrado)? ¿O el Congreso (los políticos que hemos votado los ciudadanos) eligen a los jueces para que representen al pueblo?", o: ["A. Los propios jueces deben elegir íntegramente a sus jefes.", "B. Equilibrio entre el Congreso y los propios jueces.", "C. El Congreso (los políticos) debe elegir a la mayoría de los jueces.", "D. Intervención política fuerte para evitar que la justicia sea conservadora.", "E. Sin opinión."], w: [2,1,-1,-2,0] },
+            { t: "30. Penas de prisión", d: "¿Qué enfoque prefieres?", n: "💡 Aclaración: Resumen del modelo penal. Castigo vs Reeducación.", o: ["A. Cárceles orientadas exclusivamente a reeducar y reinsertar.", "B. Equilibrio entre castigar lo malo y reinsertar.", "C. Penas de cárcel más duras.", "D. Endurecimiento generalizado y brutal del código penal.", "E. Depende."], w: I },
+            
+            // BLOQUE 4
+            { t: "31. Organización territorial", d: "¿Cómo se organiza España?", n: "💡 Aclaración: España tiene 17 Comunidades Autónomas (con su propia sanidad y educación). Derecha radical quiere quitarlas y que todo se mande desde Madrid. Nacionalistas e Izquierda quieren darles más poder o incluso un sistema Federal.", o: ["A. Recentralizar: quitar competencias a autonomías (ej. Sanidad igual para todos).", "B. Mantener el Estado de las Autonomías como está.", "C. Avanzar hacia un Estado Federal (más independencia regional).", "D. Eliminar totalmente las Autonomías; un solo gobierno en España.", "E. Sin opinión."], w: [1,0,-2,3,0] },
+            { t: "32. Financiación autonómica", d: "¿Cómo se reparte el dinero de los impuestos?", n: "💡 Aclaración: El famoso debate de la 'Financiación Singular'. ¿Todo el dinero va a una hucha común y se reparte para que Andalucía y Cataluña tengan los mismos hospitales? ¿O cada región recauda y se queda con lo suyo (modelo vasco)?", o: ["A. Hucha única centralizada. Mismos servicios exactos en toda España.", "B. Sistema basado en población.", "C. Gran redistribución de ricos a pobres para asegurar equidad territorial.", "D. Financiación Singular: que Cataluña/País Vasco recauden y se queden sus impuestos.", "E. Sin opinión."], w: [2,0,-1,-2,0] },
+            { t: "33. Independencia (Cataluña/Euskadi)", d: "Ante demandas secesionistas:", n: "💡 Aclaración: Si un territorio quiere separarse de España. Izquierda: 'Hagamos un referéndum para que voten'. Derecha: 'La Constitución lo prohíbe, España no se rompe y si hace falta se manda a la policía/ejército'.", o: ["A. Debería permitirse un Referéndum legal vinculante.", "B. Negociar más autogobierno dentro de la Constitución.", "C. Buscar solución política sin referéndum de separación.", "D. Rechazar tajantemente y aplicar mano dura (Artículo 155).", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "34. Lenguas cooficiales", d: "En colegios de Cataluña, Galicia, País Vasco...", n: "💡 Aclaración: ¿El Español debe ser la lengua obligatoria principal en todo el país (Derecha)? ¿O las regiones pueden dar las clases enteras en Catalán/Vasco/Gallego para proteger su lengua propia (Izquierda/Nacionalistas)?", o: ["A. El Catalán/Vasco/Gallego debe tener exactamente la misma presencia obligatoria que el Español.", "B. Garantizar flexibilidad bilingüe.", "C. Libertad familiar: los padres eligen en qué idioma estudian sus hijos.", "D. El Español (Castellano) debe ser la lengua predominante obligatoria.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "35. Igualdad hombre-mujer", d: "Ministerio de Igualdad y políticas:", n: "💡 Aclaración: Izquierda: 'Las mujeres sufren discriminación histórica, necesitamos leyes de cuotas y ministerios para ayudarlas'. Derecha: 'La Constitución ya dice que somos iguales, esas leyes discriminan al hombre'.", o: ["A. Igualdad jurídica estricta, eliminar cuotas y ministerios feministas.", "B. Mantener políticas pero sin excesos.", "C. Mantener y ampliar políticas públicas (Ministerio de Igualdad).", "D. Medidas radicales de discriminación positiva hacia la mujer.", "E. Sin opinión."], w: EX },
+            { t: "36. Violencia de género", d: "Sobre la ley de violencia machista:", n: "💡 Aclaración: En España hay una ley que pena más duro si el agresor es el marido/novio. Izquierda: 'Protege a la mujer del machismo'. Derecha/Vox: 'Va contra la presunción de inocencia del hombre; toda violencia intrafamiliar debería penarse igual'.", o: ["A. Derogar ley actual; usar ley de Violencia Intrafamiliar (sin importar el sexo).", "B. Mantener medidas pero revisar falsas denuncias.", "C. Reforzar la actual Ley de Violencia de Género.", "D. Ampliar masivamente el dinero y recursos contra el machismo.", "E. Sin opinión."], w: EX },
+            { t: "37. Derechos LGTBI / Ley Trans", d: "Políticas sobre diversidad sexual:", n: "💡 Aclaración: Izquierda: 'Necesitamos leyes (Ley Trans) para protegerles de la transfobia/homofobia en colegios y empresas'. Derecha: 'La ley ya nos protege a todos igual; no hay que meter ideología de género en los colegios'.", o: ["A. Eliminar leyes y banderas LGTBI institucionales; igualdad básica ante la ley.", "B. Mantener protecciones legales sin adoctrinamiento.", "C. Mantener Ley Trans y visibilidad institucional.", "D. Desarrollar educación obligatoria en diversidad sexual desde primaria.", "E. Sin opinión."], w: EX },
+            { t: "38. Aborto", d: "¿Cuál debe ser la ley?", n: "💡 Aclaración: El derecho a interrumpir el embarazo. Desde considerarlo un asesinato y prohibirlo (extrema derecha), hasta considerarlo un derecho humano básico y gratis en hospitales públicos (izquierda).", o: ["A. Prohibirlo o limitarlo solo a violación/riesgo mortal de la madre.", "B. Mantener ley actual pero dar dinero a las embarazadas para que no aborten.", "C. Mantener el sistema actual de aborto libre en las primeras semanas.", "D. Garantizar acceso rápido y universal en todos los hospitales públicos.", "E. Sin opinión."], w: EX },
+            { t: "39. Eutanasia", d: "El derecho a morir dignamente:", n: "💡 Aclaración: Ayudar a morir a un enfermo terminal con dolores. Vox/PP estaban en contra (pedían solo cuidados paliativos), PSOE/Podemos aprobaron la ley para legalizarla.", o: ["A. Derogar la ley de eutanasia; ofrecer solo cuidados paliativos.", "B. Permitirla de forma muy restrictiva en casos límite.", "C. Mantener la actual ley con garantías jurídicas.", "D. Facilitar el acceso rápido a quien pida morir libremente.", "E. Sin opinión."], w: EX },
+            { t: "40. Libertad de expresión", d: "¿Dónde están los límites?", n: "💡 Aclaración: Sobre chistes machistas/racistas, ofender a la Corona o la religión. ¿Se debe permitir decir barbaridades porque es 'libertad' (SALF/Vox), o se debe multar el 'Discurso de Odio' para proteger a minorías (Izquierda)?", o: ["A. Libertad total, eliminar 'delitos de odio' y permitir la ofensa.", "B. Amplia libertad, penando solo si hay violencia directa.", "C. Mantener leyes actuales contra insultos racistas o LGTBIfóbicos.", "D. Endurecer castigos contra el discurso de odio, machismo y racismo en redes.", "E. Sin opinión."], w: EX },
+
+            // BLOQUE 5
+            { t: "41. Cambio climático", d: "¿Qué prioridad darle?", n: "💡 Aclaración: Izquierda: 'Hay que prohibir coches diésel y cerrar fábricas contaminantes ya para salvar el planeta, aunque sea caro'. Derecha: 'No podemos arruinar a los trabajadores y empresas con impuestos verdes (Agenda 2030)'.", o: ["A. La economía primero; no aceptar políticas verdes que suban los precios (anti-Agenda2030).", "B. Reducir contaminación pero sin dañar industria o agricultores.", "C. Acelerar la transición ecológica.", "D. Máxima prioridad verde, asumiendo sacrificios económicos drásticos.", "E. Sin opinión."], w: EX },
+            { t: "42. Energía nuclear", d: "¿Qué hacer con las centrales?", n: "💡 Aclaración: La energía nuclear no emite CO2, pero genera residuos radiactivos. Izquierda: 'Son peligrosas, cerrarlas ya'. Derecha: 'Producen luz barata y constante, construyamos más'.", o: ["A. Cerrarlas inmediatamente y poner solo placas solares/viento.", "B. Mantenerlas temporalmente hasta tener más renovables.", "C. Mantenerlas abiertas durante toda su vida útil.", "D. Apostar firmemente y construir NUEVAS centrales nucleares.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "43. Energías renovables", d: "Sobre placas solares y molinos:", n: "💡 Aclaración: ¿Llenar el campo de molinos eólicos para tener energía limpia rápido, o ir despacio para no estropear el paisaje de los pueblos y no encarecer la luz?", o: ["A. Ir despacio sin imponer cuotas ecologistas.", "B. Aumentar progresivamente combinando con otras fuentes.", "C. Acelerar su implantación fuertemente.", "D. Transición radical e inmediata al modelo 100% verde.", "E. Sin opinión."], w: N },
+            
+            // BLOQUE 6
+            { t: "44. Pensiones", d: "¿Cómo asegurar las pensiones de los abuelos?", n: "💡 Aclaración: No hay dinero para todos. Izquierda: 'Subamos los impuestos a los ricos para poder pagar unas pensiones altas'. Derecha: 'Eso arruina el país, hay que bajar la cuantía de la pensión o retrasar la edad de jubilación a los 70'.", o: ["A. Priorizar sostenibilidad (reducir el dinero que cobran los abuelos).", "B. Hacer ajustes moderados.", "C. Garantizar que suban con el IPC metiendo dinero de impuestos.", "D. Subir mucho las pensiones bajas gastando el Estado lo que haga falta.", "E. Sin opinión."], w: N },
+            { t: "45. Edad de jubilación", d: "¿A qué edad dejar de trabajar?", n: "💡 Aclaración: Para que el sistema no quiebre. ¿Jubilarse antes (Izquierda) para descansar, o jubilarse más viejo (Derecha) porque vivimos más años?", o: ["A. Reducirla a los 60-63 años para que descansen y haya empleo joven.", "B. Mantenerla en los 65-67 actuales.", "C. Vincularla a la esperanza de vida.", "D. Retrasarla obligatoriamente hacia los 70 años.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "46. Pensiones privadas", d: "¿Rol del Estado?", n: "💡 Aclaración: Si la pensión pública baja, ¿el Estado debe dar beneficios en los impuestos a los que se abran un plan de pensiones privado en el Banco (Derecha), o debe prohibir eso para fortalecer solo lo público (Izquierda)?", o: ["A. Fomentar fuertemente los planes de bancos privados con ventajas fiscales.", "B. Sistema mixto con apoyo al ahorro.", "C. Priorizar lo público, quitando ventajas a lo privado.", "D. Lo público debe ser tan rico que haga innecesario ahorrar en un banco.", "E. Sin opinión."], w: N },
+            { t: "47. Tamaño de la Administración", d: "Sobre empleados públicos y Ministerios:", n: "💡 Aclaración: ¿El Estado tiene muchos 'chiringuitos' y políticos cobrando del bote que hay que despedir (Derecha)? ¿O necesitamos contratar más funcionarios, profesores y celadores (Izquierda)?", o: ["A. Despedir masivamente a empleados públicos y cerrar organismos/ministerios.", "B. Reducir burocracia sin tocar hospitales.", "C. Aumentar personal donde haya carencias.", "D. Incrementar masivamente el número de funcionarios y ministerios.", "E. Depende."], w: N },
+            { t: "48. Funcionarios", d: "Condiciones de empleo público:", n: "💡 Aclaración: Un funcionario tiene el puesto asegurado de por vida. ¿Debería poder despedírseles si son vagos o ineficientes (Derecha) o hay que subirles el sueldo (Izquierda)?", o: ["A. Posibilidad de despedirles y quitarles el puesto fijo vitalicio si no rinden.", "B. Mantener puesto fijo pero exigirles más eficiencia.", "C. Priorizar que sigan siendo fijos de por vida y contratar más.", "D. Mejorar mucho sus sueldos y reducir sus horas de trabajo.", "E. Sin opinión."], w: N },
+            { t: "49. Corrupción política", d: "¿Cómo frenarla?", n: "💡 Aclaración: Derecha: 'Si el Estado gestiona menos dinero y obras, habrá menos mordidas'. Izquierda: 'Hay que vigilarles más creando oficinas anticorrupción'.", o: ["A. Privatizar cosas para que los políticos gestionen menos dinero público.", "B. Aumentar transparencia.", "C. Crear nuevos organismos de inspectores públicos.", "D. Purgas, castigos extremos e inhabilitaciones de por vida.", "E. Sin opinión."], w: N },
+            { t: "50. Financiación de Partidos y Sindicatos", d: "¿Quién paga a los políticos?", n: "💡 Aclaración: Hoy se pagan con nuestros impuestos. SALF/Vox quieren que no reciban ni un euro público. Podemos quiere que sea 100% público para que los bancos no les puedan 'comprar' donándoles dinero.", o: ["A. Eliminar 100% las subvenciones públicas. Que vivan de donaciones de sus fans.", "B. Modelo mixto con fuertes recortes.", "C. Dinero público suficiente para que no dependan de empresarios ricos.", "D. 100% público. Prohibir totalmente que un empresario les dé dinero.", "E. Sin opinión."], w: EX },
+            { t: "51. Jefatura del Estado", d: "¿El Rey Felipe VI?", n: "💡 Aclaración: ¿Debe España seguir siendo una Monarquía (PP/Vox/PSOE) o debe echar al Rey y votar a un Presidente de la República (Izquierda/Independentistas)?", o: ["A. Echar al Rey e instaurar una República votada por los ciudadanos.", "B. Monarquía pero quitándoles privilegios e inmunidad.", "C. Mantener a la Familia Real con pequeños ajustes.", "D. Defender la Monarquía y al Rey firmemente como símbolo de España.", "E. Sin opinión."], w: [-2,-1,1,3,0] },
+            { t: "52. Visión económica Global", d: "Iniciativa privada frente a Estado:", n: "💡 Aclaración: Resumen del test. ¿El motor del país son los empresarios (capitalismo puro) o el Estado (socialismo)?", o: ["A. Capitalismo salvaje: el mercado manda, impuestos cero, Estado mínimo.", "B. Capitalismo moderado con ciertas reglas del Estado.", "C. Economía mixta con un Estado interviniendo fuertemente.", "D. Socialismo/Intervencionismo absoluto estatal.", "E. Sin opinión."], w: EX },
+            { t: "53. Prioridad para España", d: "Si solo puedes elegir una:", n: "💡 Aclaración: El resumen de tu voto.", o: ["A. Libertad, bajos impuestos, crecimiento empresarial y defender la unidad de España.", "B. Identidad, seguridad extrema, deportaciones y anti-progresismo.", "C. Ampliar servicios públicos y proteger a los trabajadores.", "D. Cambio radical: acabar con el sistema capitalista o independizar mi región.", "E. Equilibrio aburrido y seguro en el centro."], w: [1, 3, -1, -2, 0] }
+        ];
+
+        const parties = [
+            { id: "UP", name: "Podemos / Sumar", color: "var(--color-podemos)", anchor: 15 },
+            { id: "PSOE", name: "PSOE", color: "var(--color-psoe)", anchor: 35 },
+            { id: "CS", name: "Centro Político", color: "var(--color-cs)", anchor: 50 },
+            { id: "PP", name: "Partido Popular", color: "var(--color-pp)", anchor: 68 },
+            { id: "VOX", name: "Vox", color: "var(--color-vox)", anchor: 85 },
+            { id: "SALF", name: "Se Acabó La Fiesta", color: "var(--color-salf)", anchor: 98 }
+        ];
+
+        let currIndex = 0, answers = new Array(questions.length).fill(null), userAffinityScores = [];
+        let chartInstance = null;
+
+        const elStart = document.getElementById('screen-start'), elTest = document.getElementById('screen-test');
+        const elResult = document.getElementById('screen-result'), elOptions = document.getElementById('options-box');
+        const btnNext = document.getElementById('btn-next'), btnPrev = document.getElementById('btn-prev');
+
+        function startTest() { elStart.style.display = 'none'; elTest.classList.remove('hidden'); elTest.classList.add('fade-in'); renderQ(); }
+
+        function renderQ() {
+            const q = questions[currIndex];
+            document.getElementById('q-counter').innerText = `Pregunta ${currIndex + 1} de ${questions.length}`;
+            document.getElementById('q-title').innerText = q.t;
+            document.getElementById('q-desc').innerText = q.d;
+            document.getElementById('q-note').innerText = q.n; // Carga la nota explicativa
+            document.getElementById('p-bar').style.width = `${(currIndex / questions.length) * 100}%`;
+            btnPrev.disabled = currIndex === 0;
+
+            elOptions.innerHTML = '';
+            q.o.forEach((txt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn ${answers[currIndex] === idx ? 'selected' : ''}`;
+                btn.innerHTML = `<span>${txt}</span>`;
+                btn.onclick = () => selectOpt(idx);
+                elOptions.appendChild(btn);
+            });
+            btnNext.disabled = answers[currIndex] === null;
+            btnNext.innerText = currIndex === questions.length - 1 ? "Ver Resultados" : "Siguiente";
+            
+            // Scroll arriba para móviles
+            document.querySelector('.screen').scrollTop = 0;
+        }
+
+        function selectOpt(idx) {
+            answers[currIndex] = idx;
+            Array.from(elOptions.children).forEach((b, i) => b.className = `option-btn ${i === idx ? 'selected' : ''}`);
+            btnNext.disabled = false;
+            setTimeout(() => { if (currIndex < questions.length - 1) nextQ(); else calcResult(); }, 350);
+        }
+
+        function prevQ() { if (currIndex > 0) { currIndex--; renderQ(); } }
+        function nextQ() { if (currIndex < questions.length - 1) { currIndex++; renderQ(); } else calcResult(); }
+
+        function calcResult() {
+            elTest.style.display = 'none'; elResult.classList.remove('hidden');
+            let score = 0;
+            answers.forEach((ans, i) => { if(ans !== null && ans !== 4) score += questions[i].w[ans]; });
+
+            const minScore = questions.length * -2;
+            const maxScore = questions.length * 2.5; 
+            
+            let userPct = ((score - minScore) / (maxScore - minScore)) * 100;
+            if(userPct < 0) userPct = 0; if(userPct > 100) userPct = 100;
+
+            userAffinityScores = parties.map(p => {
+                let distance = Math.abs(userPct - p.anchor);
+                let affinity = Math.max(0, 100 - (distance * 1.6)); 
+                return { ...p, affinity: parseFloat(affinity.toFixed(1)) };
+            });
+
+            let sortedByAffinity = [...userAffinityScores].sort((a,b) => b.affinity - a.affinity);
+            let winner = sortedByAffinity[0];
+
+            document.getElementById('winner-name').innerText = winner.name;
+            document.getElementById('winner-match').innerText = `${Math.round(winner.affinity)}% de Afinidad`;
+            const logo = document.getElementById('winner-logo');
+            logo.innerText = winner.id; logo.style.backgroundColor = winner.color;
+
+            renderChart();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('affinityChart').getContext('2d');
+            const labels = userAffinityScores.map(p => p.id);
+            const data = userAffinityScores.map(p => p.affinity);
+            const bgColors = ["#6b21a8", "#ef4444", "#fb923c", "#0158a8", "#4ade80", "#111111"];
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: '% Afinidad', data: data, backgroundColor: bgColors, borderRadius: 6 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 }, x: { grid: { display: false } } }, animation: { duration: 1500 } }
+            });
+        }
+
+        async function shareResults() {
+            let winner = [...userAffinityScores].sort((a,b) => b.affinity - a.affinity)[0];
+            const shareData = { title: 'Test Político 2026', text: `¡He hecho el test! Mi partido es ${winner.name} (${Math.round(winner.affinity)}%). 📊 ¡Pruébalo!`, url: window.location.href };
+            try { if (navigator.share) await navigator.share(shareData); else alert("Copia el enlace de esta página web para compartirlo."); } catch (err) { console.log(err); }
+        }
+    </script>
+</body>
+</html>
